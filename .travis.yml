@@ -1,0 +1,49 @@
+# Use Dockerized infrastructure
+sudo: false
+
+# Use node_js environnement
+language: node_js
+node_js:
+  - "10"
+
+# Cache Gcloud SDK between commands
+cache:
+  directories:
+    - "$HOME/google-cloud-sdk/"
+
+# Install services
+services:
+  - docker
+
+# Set env vars
+env:
+  global:
+    - GOOGLE_APPLICATION_CREDENTIALS=~/gcloud-service-key.json
+    - PROJECT_NAME=main-stack-241307
+    - CLUSTER_NAME=test-cluster-1
+    - CLOUDSDK_COMPUTE_ZONE=europe-west2-a
+    - DOCKER_IMAGE_NAME=node-travis-gke
+    - KUBE_DEPLOYMENT_NAME=node-travis-gke
+    - KUBE_DEPLOYMENT_CONTAINER_NAME=node-travis-gke
+    - NODE_ENV=CI
+
+install:
+  - npm install
+
+script:
+ - echo "No tests so far"
+
+before_deploy:
+  - if [ ! -d "$HOME/google-cloud-sdk/bin" ]; then rm -rf $HOME/google-cloud-sdk; export CLOUDSDK_CORE_DISABLE_PROMPTS=1; curl https://sdk.cloud.google.com | bash > /dev/null; fi
+  - source $HOME/google-cloud-sdk/path.bash.inc
+  - gcloud --quiet version
+  - gcloud --quiet components update
+  # - gcloud --quiet components beta update
+  - gcloud --quiet components update kubectl
+
+deploy:
+  - provider: script
+    script: ./deploy.sh
+    skip_cleanup: true
+    on:
+      branch: master
